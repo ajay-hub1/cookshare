@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CookShare — Recipe Sharing Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --primary: #c0392b;
+    --primary-dark: #96281b;
+    --accent: #e67e22;
+    --bg: #faf8f5;
+    --card: #ffffff;
+    --text: #1a1a1a;
+    --text-muted: #7a7a7a;
+    --border: #e8e0d5;
+    --success: #27ae60;
+    --shadow: 0 4px 24px rgba(0,0,0,0.08);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* NAV */
+  nav {
+    background: var(--primary);
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 12px rgba(192,57,43,0.3);
+  }
+
+  .logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.6rem;
+    font-weight: 900;
+    color: white;
+    letter-spacing: -0.5px;
+  }
+
+  .logo span { color: #f9ca74; }
+
+  .nav-btn {
+    background: white;
+    color: var(--primary);
+    border: none;
+    padding: 0.5rem 1.2rem;
+    border-radius: 50px;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+  }
+
+  .nav-btn:hover { background: #f9ca74; }
+
+  /* PAGES */
+  .page { display: none; padding: 2rem; max-width: 1100px; margin: 0 auto; }
+  .page.active { display: block; }
+
+  /* HOME FEED */
+  .feed-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+  }
+
+  .search-bar {
+    flex: 1;
+    min-width: 200px;
+    padding: 0.75rem 1.2rem;
+    border: 2px solid var(--border);
+    border-radius: 50px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border 0.2s;
+  }
+
+  .search-bar:focus { border-color: var(--primary); }
+
+  .tag-btn {
+    padding: 0.5rem 1.2rem;
+    border-radius: 50px;
+    border: 2px solid var(--border);
+    background: white;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+
+  .tag-btn.active, .tag-btn:hover {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+  }
+
+  .recipes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .recipe-card {
+    background: var(--card);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    animation: fadeIn 0.4s ease;
+  }
+
+  .recipe-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+  }
+
+  .recipe-img {
+    width: 100%;
+    height: 180px;
+    background: linear-gradient(135deg, #f5e6d3, #e8c9a0);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+  }
+
+  .recipe-body { padding: 1.2rem; }
+
+  .recipe-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+
+  .recipe-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+  }
+
+  .stars { color: var(--accent); }
+
+  .recipe-tags { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-top: 0.6rem; }
+
+  .tag {
+    background: #fef0e6;
+    color: var(--accent);
+    padding: 0.2rem 0.6rem;
+    border-radius: 50px;
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+
+  /* DETAIL PAGE */
+  .detail-back {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--primary);
+    cursor: pointer;
+    font-weight: 500;
+    margin-bottom: 1.5rem;
+    width: fit-content;
+  }
+
+  .detail-back:hover { text-decoration: underline; }
+
+  .detail-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+  }
+
+  @media (max-width: 700px) { .detail-layout { grid-template-columns: 1fr; } }
+
+  .detail-media {
+    background: linear-gradient(135deg, #f5e6d3, #e8c9a0);
+    border-radius: 16px;
+    height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 5rem;
+  }
+
+  .detail-info h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 2rem;
+    font-weight: 900;
+    margin-bottom: 0.75rem;
+  }
+
+  .detail-section {
+    background: white;
+    border-radius: 12px;
+    padding: 1.2rem;
+    margin-top: 1rem;
+    box-shadow: var(--shadow);
+  }
+
+  .detail-section h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem;
+    margin-bottom: 0.75rem;
+    color: var(--primary);
+  }
+
+  .comments-section { margin-top: 2rem; }
+
+  .comment-input-row {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+
+  .comment-input {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    outline: none;
+    transition: border 0.2s;
+  }
+
+  .comment-input:focus { border-color: var(--primary); }
+
+  /* UPLOAD PAGE */
+  .upload-form {
+    background: white;
+    border-radius: 20px;
+    padding: 2.5rem;
+    box-shadow: var(--shadow);
+    max-width: 700px;
+    margin: 0 auto;
+  }
+
+  .upload-form h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.8rem;
+    font-weight: 900;
+    margin-bottom: 1.5rem;
+    color: var(--primary);
+  }
+
+  .form-group { margin-bottom: 1.2rem; }
+
+  .form-group label {
+    display: block;
+    font-weight: 500;
+    margin-bottom: 0.4rem;
+    font-size: 0.9rem;
+  }
+
+  .form-input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border 0.2s;
+    background: var(--bg);
+  }
+
+  .form-input:focus { border-color: var(--primary); background: white; }
+
+  textarea.form-input { min-height: 100px; resize: vertical; }
+
+  .upload-btns { display: flex; gap: 1rem; margin: 1rem 0; }
+
+  .upload-btn {
+    flex: 1;
+    padding: 0.75rem;
+    border: 2px dashed var(--border);
+    border-radius: 10px;
+    background: var(--bg);
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.2s;
+    color: var(--text-muted);
+  }
+
+  .upload-btn:hover { border-color: var(--primary); color: var(--primary); background: #fef5f5; }
+
+  .tags-input-row { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem; }
+
+  /* BUTTONS */
+  .btn-primary {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.8rem;
+    border-radius: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.2s;
+    width: 100%;
+    margin-top: 0.5rem;
+  }
+
+  .btn-primary:hover { background: var(--primary-dark); }
+
+  .btn-danger {
+    background: #e74c3c;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .btn-danger:hover { background: #c0392b; }
+
+  .btn-secondary {
+    background: white;
+    color: var(--primary);
+    border: 2px solid var(--primary);
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-secondary:hover { background: var(--primary); color: white; }
+
+  /* LOADING & EMPTY */
+  .loading {
+    text-align: center;
+    padding: 3rem;
+    color: var(--text-muted);
+    font-size: 1rem;
+  }
+
+  .spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--border);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 1rem;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: var(--text-muted);
+  }
+
+  .empty-state .emoji { font-size: 3rem; margin-bottom: 1rem; }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    background: var(--text);
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    z-index: 1000;
+    animation: slideUp 0.3s ease;
+    display: none;
+  }
+
+  .toast.success { background: var(--success); }
+  .toast.error { background: #e74c3c; }
+  .toast.show { display: block; }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+  .page-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 2rem;
+    font-weight: 900;
+    margin-bottom: 1.5rem;
+  }
+
+  .action-row { display: flex; gap: 0.5rem; margin-top: 1rem; }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">Cook<span>Share</span></div>
+  <div style="display:flex;gap:0.75rem">
+    <button class="nav-btn" onclick="showPage('home')">🏠 Home</button>
+    <button class="nav-btn" onclick="showPage('upload')">➕ Add Recipe</button>
+  </div>
+</nav>
+
+<!-- HOME PAGE -->
+<div id="page-home" class="page active">
+  <div class="feed-header">
+    <input class="search-bar" type="text" placeholder="🔍 Search recipes..." id="searchInput" oninput="filterRecipes()">
+    <button class="tag-btn active" onclick="filterByTag('all', this)">All</button>
+    <button class="tag-btn" onclick="filterByTag('vegan', this)">#Vegan</button>
+    <button class="tag-btn" onclick="filterByTag('pasta', this)">#Pasta</button>
+    <button class="tag-btn" onclick="filterByTag('quick', this)">#Quick</button>
+  </div>
+  <div id="recipes-container" class="recipes-grid">
+    <div class="loading"><div class="spinner"></div>Loading recipes...</div>
+  </div>
+</div>
+
+<!-- DETAIL PAGE -->
+<div id="page-detail" class="page">
+  <div class="detail-back" onclick="showPage('home')">← Back to recipes</div>
+  <div id="detail-content"></div>
+</div>
+
+<!-- UPLOAD PAGE -->
+<div id="page-upload" class="page">
+  <div class="upload-form">
+    <h2>🍳 Share a Recipe</h2>
+
+    <div class="form-group">
+      <label>Recipe Title *</label>
+      <input class="form-input" type="text" id="f-title" placeholder="e.g. Spaghetti Carbonara">
+    </div>
+
+    <div class="form-group">
+      <label>Description *</label>
+      <textarea class="form-input" id="f-desc" placeholder="Tell us about this dish..."></textarea>
+    </div>
+
+    <div class="form-group">
+      <label>Ingredients *</label>
+      <textarea class="form-input" id="f-ingredients" placeholder="200g pasta, 3 eggs, 100g pancetta..."></textarea>
+    </div>
+
+    <div class="form-group">
+      <label>Steps *</label>
+      <textarea class="form-input" id="f-steps" placeholder="1. Boil water... 2. Cook pasta..."></textarea>
+    </div>
+
+    <div class="form-group">
+      <label>Category</label>
+      <input class="form-input" type="text" id="f-category" placeholder="e.g. Italian, Vegan, Quick">
+    </div>
+
+    <div class="form-group">
+      <label>Tags (comma separated)</label>
+      <input class="form-input" type="text" id="f-tags" placeholder="pasta, italian, dinner">
+    </div>
+
+    <div class="form-group">
+      <label>Photo URL (optional)</label>
+      <input class="form-input" type="text" id="f-photo" placeholder="https://...">
+    </div>
+
+    <div class="form-group">
+      <label>Video URL (optional)</label>
+      <input class="form-input" type="text" id="f-video" placeholder="https://...">
+    </div>
+
+    <button class="btn-primary" onclick="submitRecipe()">🚀 Publish Recipe</button>
+  </div>
+</div>
+
+<!-- EDIT PAGE -->
+<div id="page-edit" class="page">
+  <div class="upload-form">
+    <h2>✏️ Edit Recipe</h2>
+    <input type="hidden" id="e-id">
+    <div class="form-group">
+      <label>Recipe Title *</label>
+      <input class="form-input" type="text" id="e-title">
+    </div>
+    <div class="form-group">
+      <label>Description</label>
+      <textarea class="form-input" id="e-desc"></textarea>
+    </div>
+    <div class="form-group">
+      <label>Ingredients</label>
+      <textarea class="form-input" id="e-ingredients"></textarea>
+    </div>
+    <div class="form-group">
+      <label>Steps</label>
+      <textarea class="form-input" id="e-steps"></textarea>
+    </div>
+    <div class="form-group">
+      <label>Category</label>
+      <input class="form-input" type="text" id="e-category">
+    </div>
+    <div class="form-group">
+      <label>Tags</label>
+      <input class="form-input" type="text" id="e-tags">
+    </div>
+    <div style="display:flex;gap:1rem;margin-top:1rem">
+      <button class="btn-secondary" onclick="showPage('home')" style="flex:1">Cancel</button>
+      <button class="btn-primary" onclick="updateRecipe()" style="flex:2;margin-top:0">💾 Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast" class="toast"></div>
+
+<script>
+// ===================== API CONFIG =====================
+const API = {
+  POST:   'https://prod-10.spaincentral.logic.azure.com:443/workflows/5dcf34a0c2b44902a0eeaf803512bb6b/triggers/When_an_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=6jiTdC3yAR2RggpE3X5I76122WQHu4DhQirBm05ssgI',
+  GET_ALL:'https://prod-11.spaincentral.logic.azure.com:443/workflows/c03027f6757947a3947c73a23c94de24/triggers/When_an_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=UZf39d4xQhluAnPbJM4q2Na2NWYfWyc2Xs05DT-zxjs',
+  GET_ONE:'https://prod-05.spaincentral.logic.azure.com:443/workflows/26dcc86880034792ba7daeb7aca6fe95/triggers/When_an_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=KpP3JiOwZ73fB5ASFgmu_X8jIOa8PVMoGaCDbApIiK4',
+  PUT:    'https://prod-11.spaincentral.logic.azure.com:443/workflows/9ce9fad3325f4ba18541258b88e82458/triggers/When_an_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=W5QkgsieuIBPVuk8_KIUyFHWw92N9wxaXElH7v-fjLM',
+  DELETE: 'https://prod-09.spaincentral.logic.azure.com:443/workflows/57495c2fbf84477cb8f0b5b9d1fb48d9/triggers/When_an_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=DPaxrtxKy2rD8pnWpaODtfLK42HHNRfJyYhP1WxKars'
+};
+
+let allRecipes = [];
+let currentTag = 'all';
+
+// ===================== NAVIGATION =====================
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  if (name === 'home') loadRecipes();
+}
+
+// ===================== TOAST =====================
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ===================== LOAD RECIPES =====================
+async function loadRecipes() {
+  const container = document.getElementById('recipes-container');
+  container.innerHTML = '<div class="loading"><div class="spinner"></div>Loading recipes...</div>';
+  try {
+    const res = await fetch(API.GET_ALL);
+    const data = await res.json();
+    allRecipes = Array.isArray(data) ? data : (data.Documents || data.value || []);
+    renderRecipes(allRecipes);
+  } catch (e) {
+    container.innerHTML = '<div class="empty-state"><div class="emoji">🍽️</div><p>No recipes yet — be the first to share one!</p></div>';
+  }
+}
+
+function renderRecipes(recipes) {
+  const container = document.getElementById('recipes-container');
+  if (!recipes.length) {
+    container.innerHTML = '<div class="empty-state"><div class="emoji">🍽️</div><p>No recipes found. Add the first one!</p></div>';
+    return;
+  }
+  container.innerHTML = recipes.map(r => `
+    <div class="recipe-card" onclick="viewRecipe('${r.id}')">
+      <div class="recipe-img">${r.photoBlobUrl ? `<img src="${r.photoBlobUrl}" style="width:100%;height:100%;object-fit:cover">` : '🍳'}</div>
+      <div class="recipe-body">
+        <div class="recipe-title">${r.title || 'Untitled Recipe'}</div>
+        <div class="recipe-meta">
+          <span class="stars">★★★★★</span>
+          <span>${r.averageRating || '5.0'}</span>
+          <span>•</span>
+          <span>${r.category || 'General'}</span>
+        </div>
+        <div class="recipe-tags">
+          ${(r.tags || []).map(t => `<span class="tag">#${t}</span>`).join('')}
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function filterRecipes() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  const filtered = allRecipes.filter(r =>
+    (r.title || '').toLowerCase().includes(q) ||
+    (r.description || '').toLowerCase().includes(q) ||
+    (r.tags || []).some(t => t.toLowerCase().includes(q))
+  );
+  renderRecipes(filtered);
+}
+
+function filterByTag(tag, btn) {
+  document.querySelectorAll('.tag-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentTag = tag;
+  if (tag === 'all') { renderRecipes(allRecipes); return; }
+  const filtered = allRecipes.filter(r => (r.tags || []).map(t => t.toLowerCase()).includes(tag));
+  renderRecipes(filtered);
+}
+
+// ===================== VIEW RECIPE =====================
+async function viewRecipe(id) {
+  showPage('detail');
+  const container = document.getElementById('detail-content');
+  container.innerHTML = '<div class="loading"><div class="spinner"></div>Loading recipe...</div>';
+  try {
+    const res = await fetch(API.GET_ONE + '&id=' + id);
+    const r = await res.json();
+    container.innerHTML = `
+      <div class="detail-layout">
+        <div class="detail-media">
+          ${r.photoBlobUrl ? `<img src="${r.photoBlobUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:16px">` : '🍳'}
+        </div>
+        <div class="detail-info">
+          <h1>${r.title || 'Untitled'}</h1>
+          <div class="recipe-meta" style="margin-bottom:0.75rem">
+            <span class="stars">★★★★★</span>
+            <span>${r.averageRating || '5.0'}</span>
+            <span>•</span><span>${r.category || 'General'}</span>
+          </div>
+          <div class="recipe-tags">${(r.tags || []).map(t => `<span class="tag">#${t}</span>`).join('')}</div>
+          <div class="detail-section">
+            <h3>📝 Description</h3>
+            <p style="color:var(--text-muted);line-height:1.6">${r.description || 'No description provided.'}</p>
+          </div>
+          <div class="action-row">
+            <button class="btn-secondary" onclick="editRecipe(${JSON.stringify(r).replace(/"/g,'&quot;')})">✏️ Edit</button>
+            <button class="btn-danger" onclick="deleteRecipe('${r.id}')">🗑️ Delete</button>
+          </div>
+        </div>
+      </div>
+      <div class="detail-layout" style="margin-top:1.5rem">
+        <div class="detail-section">
+          <h3>🥕 Ingredients</h3>
+          <p style="line-height:1.8;white-space:pre-wrap">${r.ingredients || 'No ingredients listed.'}</p>
+        </div>
+        <div class="detail-section">
+          <h3>👨‍🍳 Steps</h3>
+          <p style="line-height:1.8;white-space:pre-wrap">${r.steps || 'No steps provided.'}</p>
+        </div>
+      </div>
+    `;
+  } catch(e) {
+    container.innerHTML = '<div class="empty-state"><div class="emoji">😕</div><p>Could not load recipe.</p></div>';
+  }
+}
+
+// ===================== CREATE RECIPE =====================
+async function submitRecipe() {
+  const title = document.getElementById('f-title').value.trim();
+  const desc = document.getElementById('f-desc').value.trim();
+  const ingredients = document.getElementById('f-ingredients').value.trim();
+  const steps = document.getElementById('f-steps').value.trim();
+  const category = document.getElementById('f-category').value.trim() || 'General';
+  const tagsRaw = document.getElementById('f-tags').value.trim();
+  const tags = tagsRaw ? tagsRaw.split(',').map(t => t.trim()) : [];
+  const photoBlobUrl = document.getElementById('f-photo').value.trim();
+  const videoBlobUrl = document.getElementById('f-video').value.trim();
+
+  if (!title || !desc || !ingredients || !steps) {
+    showToast('Please fill in all required fields!', 'error'); return;
+  }
+
+  const recipe = {
+    id: crypto.randomUUID(),
+    title, description: desc, ingredients, steps,
+    category, tags, photoBlobUrl, videoBlobUrl,
+    averageRating: 5.0, commentCount: 0,
+    createdAt: new Date().toISOString()
+  };
+
+  try {
+    const res = await fetch(API.POST, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(recipe)
+    });
+    if (res.ok || res.status === 201 || res.status === 200) {
+      showToast('Recipe published! 🎉', 'success');
+      ['f-title','f-desc','f-ingredients','f-steps','f-category','f-tags','f-photo','f-video'].forEach(id => document.getElementById(id).value = '');
+      setTimeout(() => showPage('home'), 1500);
+    } else {
+      showToast('Error publishing recipe. Try again.', 'error');
+    }
+  } catch(e) {
+    showToast('Network error. Check your API.', 'error');
+  }
+}
+
+// ===================== EDIT RECIPE =====================
+function editRecipe(r) {
+  document.getElementById('e-id').value = r.id;
+  document.getElementById('e-title').value = r.title || '';
+  document.getElementById('e-desc').value = r.description || '';
+  document.getElementById('e-ingredients').value = r.ingredients || '';
+  document.getElementById('e-steps').value = r.steps || '';
+  document.getElementById('e-category').value = r.category || '';
+  document.getElementById('e-tags').value = (r.tags || []).join(', ');
+  showPage('edit');
+}
+
+async function updateRecipe() {
+  const id = document.getElementById('e-id').value;
+  const tagsRaw = document.getElementById('e-tags').value.trim();
+  const recipe = {
+    id,
+    title: document.getElementById('e-title').value.trim(),
+    description: document.getElementById('e-desc').value.trim(),
+    ingredients: document.getElementById('e-ingredients').value.trim(),
+    steps: document.getElementById('e-steps').value.trim(),
+    category: document.getElementById('e-category').value.trim(),
+    tags: tagsRaw ? tagsRaw.split(',').map(t => t.trim()) : [],
+    updatedAt: new Date().toISOString()
+  };
+
+  try {
+    const res = await fetch(API.PUT + '&id=' + id, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(recipe)
+    });
+    showToast('Recipe updated! ✅', 'success');
+    setTimeout(() => showPage('home'), 1500);
+  } catch(e) {
+    showToast('Error updating recipe.', 'error');
+  }
+}
+
+// ===================== DELETE RECIPE =====================
+async function deleteRecipe(id) {
+  if (!confirm('Are you sure you want to delete this recipe?')) return;
+  try {
+    await fetch(API.DELETE + '&id=' + id, { method: 'POST' });
+    showToast('Recipe deleted!', 'success');
+    setTimeout(() => showPage('home'), 1000);
+  } catch(e) {
+    showToast('Error deleting recipe.', 'error');
+  }
+}
+
+// Load recipes on start
+loadRecipes();
+</script>
+</body>
+</html>
