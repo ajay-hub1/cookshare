@@ -440,17 +440,16 @@ async function updateRecipe(){
 async function deleteRecipe(id){
   if(!confirm('Delete this recipe?')) return;
   try{
-    // Call DELETE endpoint
-    await fetch(API.DELETE+'&id='+id,{method:'POST',headers:{'Content-Type':'application/json'}});
-    // Remove from local cache immediately
-    allRecipes=allRecipes.filter(r=>r.id!==id);
+    const res = await fetch(API.DELETE, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({id: id})
+    });
+    allRecipes = allRecipes.filter(r => r.id !== id);
     toast('Recipe deleted! 🗑️','info');
-    setTimeout(()=>showPage('home'),1000);
+    setTimeout(()=>showPage('home'), 1000);
   }catch(e){
-    // Even if API fails, remove from UI
-    allRecipes=allRecipes.filter(r=>r.id!==id);
-    toast('Recipe removed','info');
-    setTimeout(()=>showPage('home'),1000);
+    toast('Network error.','error');
   }
 }
 
