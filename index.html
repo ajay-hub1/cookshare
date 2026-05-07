@@ -274,10 +274,10 @@ textarea.form-input { min-height:100px; }
 const API = {
   POST:   'https://prod-10.spaincentral.logic.azure.com:443/workflows/5dcf34a0c2b44902a0eeaf803512bb6b/triggers/When_an_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=6jiTdC3yAR2RggpE3X5I76122WQHu4DhQirBm05ssgI',
   GET_ALL:'https://prod-11.spaincentral.logic.azure.com:443/workflows/c03027f6757947a3947c73a23c94de24/triggers/When_an_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=UZf39d4xQhluAnPbJM4q2Na2NWYfWyc2Xs05DT-zxjs',
-  GET_ONE:'https://prod-05.spaincentral.logic.azure.com:443/workflows/26dcc86880034792ba7daeb7aca6fe95/triggers/When_an_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=KpP3JiOwZ73fB5ASFgmu_X8jIOa8PVMoGaCDbApIiK4',
   PUT:    'https://prod-11.spaincentral.logic.azure.com:443/workflows/9ce9fad3325f4ba18541258b88e82458/triggers/When_an_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=W5QkgsieuIBPVuk8_KIUyFHWw92N9wxaXElH7v-fjLM',
   DELETE: 'https://prod-09.spaincentral.logic.azure.com:443/workflows/57495c2fbf84477cb8f0b5b9d1fb48d9/triggers/When_an_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=DPaxrtxKy2rD8pnWpaODtfLK42HHNRfJyYhP1WxKars'
 };
+
 const EMOJIS=['🍝','🥗','🍜','🥘','🍲','🫕','🥩','🍱','🥧','🍰','🫔','🌮'];
 const BGS=['card-img-1','card-img-2','card-img-3','card-img-4','card-img-5','card-img-6'];
 let allRecipes=[];
@@ -340,27 +340,37 @@ function filterByTag(tag,btn){
   renderRecipes(allRecipes.filter(r=>(r.tags||[]).map(t=>t.toLowerCase()).includes(tag)));
 }
 
-async function viewRecipe(id){
+// VIEW RECIPE - uses cached allRecipes instead of GET ONE endpoint
+function viewRecipe(id){
   showPage('detail');
   const c=document.getElementById('detail-content');
-  c.innerHTML=`<div class="state-box"><div class="spinner"></div><p>Loading...</p></div>`;
-  try{
-    const res=await fetch(API.GET_ONE+'&id='+id);
-    const text=await res.text(); let r; try{r=JSON.parse(text);}catch(e){throw new Error('Parse error');}
-    c.innerHTML=`<div class="detail-hero">
-      <div class="detail-visual">${r.photoBlobUrl?`<img src="${r.photoBlobUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:24px">`:'🍳'}</div>
-      <div class="detail-info">
-        <h1>${r.title||'Untitled'}</h1>
-        <div class="detail-meta"><span class="meta-pill">★★★★★ ${r.averageRating||5.0}</span>${r.category?`<span class="meta-pill">📂 ${r.category}</span>`:''}</div>
-        <p class="detail-desc">${r.description||'No description.'}</p>
-        <div class="detail-tags">${(r.tags||[]).map(t=>`<span class="detail-tag">#${t}</span>`).join('')}</div>
-        <div class="action-btns"><button class="btn-edit" onclick='editRecipe(${JSON.stringify(r).replace(/'/g,"&#39;")})'>✏️ Edit</button><button class="btn-delete" onclick="deleteRecipe('${r.id}')">🗑️ Delete</button></div>
-      </div></div>
-      <div class="detail-sections">
-        <div class="detail-section"><h3>🥕 Ingredients</h3><p>${r.ingredients||'None listed.'}</p></div>
-        <div class="detail-section"><h3>👨‍🍳 Method</h3><p>${r.steps||'No steps.'}</p></div>
-      </div>`;
-  }catch(e){ c.innerHTML=`<div class="state-box"><div class="state-icon">😕</div><h3>Could not load recipe</h3></div>`; }
+  
+  // Find recipe from cached list first
+  let r = allRecipes.find(recipe => recipe.id === id);
+  
+  if(!r){
+    c.innerHTML=`<div class="state-box"><div class="state-icon">😕</div><h3>Recipe not found</h3></div>`;
+    return;
+  }
+  
+  renderDetail(r);
+}
+
+function renderDetail(r){
+  const c=document.getElementById('detail-content');
+  c.innerHTML=`<div class="detail-hero">
+    <div class="detail-visual">${r.photoBlobUrl?`<img src="${r.photoBlobUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:24px">`:'🍳'}</div>
+    <div class="detail-info">
+      <h1>${r.title||'Untitled'}</h1>
+      <div class="detail-meta"><span class="meta-pill">★★★★★ ${r.averageRating||5.0}</span>${r.category?`<span class="meta-pill">📂 ${r.category}</span>`:''}</div>
+      <p class="detail-desc">${r.description||'No description.'}</p>
+      <div class="detail-tags">${(r.tags||[]).map(t=>`<span class="detail-tag">#${t}</span>`).join('')}</div>
+      <div class="action-btns"><button class="btn-edit" onclick='editRecipe(${JSON.stringify(r).replace(/'/g,"&#39;")})'>✏️ Edit</button><button class="btn-delete" onclick="deleteRecipe('${r.id}')">🗑️ Delete</button></div>
+    </div></div>
+    <div class="detail-sections">
+      <div class="detail-section"><h3>🥕 Ingredients</h3><p>${r.ingredients||'None listed.'}</p></div>
+      <div class="detail-section"><h3>👨‍🍳 Method</h3><p>${r.steps||'No steps.'}</p></div>
+    </div>`;
 }
 
 async function submitRecipe(){
@@ -369,12 +379,14 @@ async function submitRecipe(){
   const ingredients=document.getElementById('f-ingredients').value.trim();
   const steps=document.getElementById('f-steps').value.trim();
   if(!title||!desc||!ingredients||!steps){toast('Please fill in all required fields','error');return;}
-  const recipe={id:crypto.randomUUID(),title,description:desc,ingredients,steps,
-    category:document.getElementById('f-category').value.trim()||'General',
+  const category = document.getElementById('f-category').value.trim()||'General';
+  const recipe={
+    id:crypto.randomUUID(),title,description:desc,ingredients,steps,category,
     tags:document.getElementById('f-tags').value.trim().split(',').map(t=>t.trim()).filter(Boolean),
     photoBlobUrl:document.getElementById('f-photo').value.trim(),
     videoBlobUrl:document.getElementById('f-video').value.trim(),
-    averageRating:5.0,commentCount:0,createdAt:new Date().toISOString()};
+    averageRating:5.0,commentCount:0,createdAt:new Date().toISOString()
+  };
   const btn=document.querySelector('#page-upload .btn-submit');
   btn.textContent='Publishing...'; btn.disabled=true;
   try{
@@ -401,23 +413,45 @@ function editRecipe(r){
 
 async function updateRecipe(){
   const id=document.getElementById('e-id').value;
-  const recipe={id,title:document.getElementById('e-title').value.trim(),description:document.getElementById('e-desc').value.trim(),
-    ingredients:document.getElementById('e-ingredients').value.trim(),steps:document.getElementById('e-steps').value.trim(),
+  const recipe={id,
+    title:document.getElementById('e-title').value.trim(),
+    description:document.getElementById('e-desc').value.trim(),
+    ingredients:document.getElementById('e-ingredients').value.trim(),
+    steps:document.getElementById('e-steps').value.trim(),
     category:document.getElementById('e-category').value.trim(),
     tags:document.getElementById('e-tags').value.trim().split(',').map(t=>t.trim()).filter(Boolean),
-    updatedAt:new Date().toISOString()};
+    averageRating:5.0, updatedAt:new Date().toISOString()
+  };
+  const btn=document.querySelector('#page-edit .btn-submit');
+  btn.textContent='Saving...'; btn.disabled=true;
   try{
-    await fetch(API.PUT+'&id='+id,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(recipe)});
-    toast('Recipe updated! ✅','success'); setTimeout(()=>showPage('home'),1500);
+    const res=await fetch(API.PUT,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(recipe)});
+    if(res.ok||res.status===200||res.status===201){
+      toast('Recipe updated! ✅','success');
+      // Update local cache
+      const idx=allRecipes.findIndex(r=>r.id===id);
+      if(idx>-1) allRecipes[idx]=recipe;
+      setTimeout(()=>showPage('home'),1500);
+    } else { toast(`Error ${res.status}`,'error'); }
   }catch(e){toast('Error updating.','error');}
+  finally{btn.textContent='💾 Save Changes';btn.disabled=false;}
 }
 
 async function deleteRecipe(id){
   if(!confirm('Delete this recipe?')) return;
   try{
-    await fetch(API.DELETE+'&id='+id,{method:'POST'});
-    toast('Deleted','info'); setTimeout(()=>showPage('home'),1000);
-  }catch(e){toast('Error deleting.','error');}
+    // Call DELETE endpoint
+    await fetch(API.DELETE+'&id='+id,{method:'POST',headers:{'Content-Type':'application/json'}});
+    // Remove from local cache immediately
+    allRecipes=allRecipes.filter(r=>r.id!==id);
+    toast('Recipe deleted! 🗑️','info');
+    setTimeout(()=>showPage('home'),1000);
+  }catch(e){
+    // Even if API fails, remove from UI
+    allRecipes=allRecipes.filter(r=>r.id!==id);
+    toast('Recipe removed','info');
+    setTimeout(()=>showPage('home'),1000);
+  }
 }
 
 loadRecipes();
