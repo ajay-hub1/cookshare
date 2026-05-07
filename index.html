@@ -439,11 +439,12 @@ async function updateRecipe(){
 
 async function deleteRecipe(id){
   if(!confirm('Delete this recipe?')) return;
+  const recipe = allRecipes.find(r => r.id === id);
   try{
     const res = await fetch(API.DELETE, {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({id: id})
+      body: JSON.stringify({id: id, category: recipe?.category || 'General'})
     });
     allRecipes = allRecipes.filter(r => r.id !== id);
     toast('Recipe deleted! 🗑️','info');
