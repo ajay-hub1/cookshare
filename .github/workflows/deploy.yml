@@ -17,7 +17,7 @@ jobs:
         with:
           inlineScript: |
             az storage blob upload \
-              --account-name cooksharea09f \
+              --account-name cooksharestore \
               --container-name '$web' \
               --name index.html \
               --file index.html \
