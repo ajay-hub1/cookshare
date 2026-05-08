@@ -1,8 +1,9 @@
-name: Deploy CookShare
+name: Deploy CookShare to Azure Storage
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
 
 jobs:
   deploy:
@@ -11,13 +12,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Validate HTML
-        run: |
-          echo "✅ Validating project files..."
-          ls -la
-          echo "✅ index.html found: $(test -f index.html && echo YES || echo NO)"
-
-      - name: Deploy to GitHub Pages
-        run: |
-          echo "✅ Deploying CookShare to GitHub Pages..."
-          echo "✅ Deployment complete!"
+      - name: Upload to Azure Blob Storage
+        uses: azure/CLI@v1
+        with:
+          inlineScript: |
+            az storage blob upload \
+              --account-name cooksharea09f \
+              --container-name '$web' \
+              --name index.html \
+              --file index.html \
+              --content-type text/html \
+              --overwrite true \
+              --connection-string "${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}"
